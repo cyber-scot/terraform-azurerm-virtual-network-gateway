@@ -45,9 +45,16 @@ resource "azurerm_virtual_network_gateway" "vnet_gw" {
   dynamic "bgp_settings" {
     for_each = var.bgp_settings != null ? var.bgp_settings : null
     content {
-      asn             = bgp_settings.value.asn
-      peering_address = bgp_settings.value.bgp_peering_address
-      peer_weight     = bgp_settings.value.peer_weight
+      asn         = bgp_settings.value.asn
+      peer_weight = bgp_settings.value.peer_weight
+
+      dynamic "peering_addresses" {
+        for_each = bgp_settings.value.peering_addresses != null ? bgp_settings.value.peering_addresses : null
+        content {
+          ip_configuration_name = peering_addresses.value.ip_configuration_name
+          apipa_addresses       = peering_addresses.value.apipa_addresses != null ? peering_addresses.value.apipa_addresses : null
+        }
+      }
     }
   }
 
@@ -65,43 +72,20 @@ resource "azurerm_virtual_network_gateway" "vnet_gw" {
       aad_tenant    = vpn_client_configuration.value.aad_tenant_url
       aad_audience  = vpn_client_configuration.value.aad_audience
       aad_issuer    = vpn_client_configuration.value.aad_issuer
-    }
-  }
 
-  vpn_client_configuration {
-    address_space = ["10.2.0.0/24"]
-
-    root_certificate {
-      name = "DigiCert-Federated-ID-Root-CA"
-
-      public_cert_data = <<EOF
-MIIDuzCCAqOgAwIBAgIQCHTZWCM+IlfFIRXIvyKSrjANBgkqhkiG9w0BAQsFADBn
-MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3
-d3cuZGlnaWNlcnQuY29tMSYwJAYDVQQDEx1EaWdpQ2VydCBGZWRlcmF0ZWQgSUQg
-Um9vdCBDQTAeFw0xMzAxMTUxMjAwMDBaFw0zMzAxMTUxMjAwMDBaMGcxCzAJBgNV
-BAYTAlVTMRUwEwYDVQQKEwxEaWdpQ2VydCBJbmMxGTAXBgNVBAsTEHd3dy5kaWdp
-Y2VydC5jb20xJjAkBgNVBAMTHURpZ2lDZXJ0IEZlZGVyYXRlZCBJRCBSb290IENB
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvAEB4pcCqnNNOWE6Ur5j
-QPUH+1y1F9KdHTRSza6k5iDlXq1kGS1qAkuKtw9JsiNRrjltmFnzMZRBbX8Tlfl8
-zAhBmb6dDduDGED01kBsTkgywYPxXVTKec0WxYEEF0oMn4wSYNl0lt2eJAKHXjNf
-GTwiibdP8CUR2ghSM2sUTI8Nt1Omfc4SMHhGhYD64uJMbX98THQ/4LMGuYegou+d
-GTiahfHtjn7AboSEknwAMJHCh5RlYZZ6B1O4QbKJ+34Q0eKgnI3X6Vc9u0zf6DH8
-Dk+4zQDYRRTqTnVO3VT8jzqDlCRuNtq6YvryOWN74/dq8LQhUnXHvFyrsdMaE1X2
-DwIDAQABo2MwYTAPBgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIBhjAdBgNV
-HQ4EFgQUGRdkFnbGt1EWjKwbUne+5OaZvRYwHwYDVR0jBBgwFoAUGRdkFnbGt1EW
-jKwbUne+5OaZvRYwDQYJKoZIhvcNAQELBQADggEBAHcqsHkrjpESqfuVTRiptJfP
-9JbdtWqRTmOf6uJi2c8YVqI6XlKXsD8C1dUUaaHKLUJzvKiazibVuBwMIT84AyqR
-QELn3e0BtgEymEygMU569b01ZPxoFSnNXc7qDZBDef8WfqAV/sxkTi8L9BkmFYfL
-uGLOhRJOFprPdoDIUBB+tmCl3oDcBy3vnUeOEioz8zAkprcb3GHwHAK+vHmmfgcn
-WsfMLH4JCLa/tRYL+Rw/N3ybCkDp00s0WUZ+AoDywSl0Q/ZEnNY0MsFiw6LyIdbq
-M/s/1JRtO3bDSzD9TazRVzn2oBqzSa8VgIo5C1nOnoAKJTlsClJKvIhnRlaLQqk=
-EOF
-
-    }
-
-    revoked_certificate {
-      name       = "Verizon-Global-Root-CA"
-      thumbprint = "912198EEF23DCAC40939312FEE97DD560BAE49B1"
+      dynamic "ipsec_policy" {
+        for_each = vpn_client_configuration.value.ipsec_policy
+        content {
+          sa_life_time_seconds   = ipsec_policy.value.sa_life_time_seconds
+          sa_data_size_kilobytes = ipsec_policy.value.sa_data_size_kilobytes
+          ipsec_encryption       = ipsec_policy.value.ipsec_encryption
+          ipsec_integrity        = ipsec_policy.value.ipsec_integrity
+          ike_encryption         = ipsec_policy.value.ike_encryption
+          ike_integrity          = ipsec_policy.value.ike_integrity
+          dh_group               = ipsec_policy.value.dh_group
+          pfs_group              = ipsec_policy.value.pfs_group
+        }
+      }
     }
   }
 }
@@ -133,7 +117,7 @@ No modules.
 |------|-------------|------|---------|:--------:|
 | <a name="input_active_active"></a> [active\_active](#input\_active\_active) | Whether to create an active-active gateway or not | `bool` | `false` | no |
 | <a name="input_bgp_route_translation_for_nat_enabled"></a> [bgp\_route\_translation\_for\_nat\_enabled](#input\_bgp\_route\_translation\_for\_nat\_enabled) | Whether BGP route transaltion for NAT is enabled on the VNet gateway | `bool` | `false` | no |
-| <a name="input_bgp_settings"></a> [bgp\_settings](#input\_bgp\_settings) | The BGP settings block, if used | <pre>list(object({<br>    asn             = optional(number)<br>    peering_address = optional(list(string))<br>    peer_weight     = optional(number, 1)<br>  }))</pre> | `[]` | no |
+| <a name="input_bgp_settings"></a> [bgp\_settings](#input\_bgp\_settings) | The BGP settings block, if used | <pre>list(object({<br>    asn = optional(number)<br>    peering_address = optional(list(object({<br>      ip_configuration_name = optional(string)<br>      apipa_addresses       = optional(list(string))<br>    })))<br>    peer_weight = optional(number, 1)<br>  }))</pre> | `[]` | no |
 | <a name="input_create_public_ip"></a> [create\_public\_ip](#input\_create\_public\_ip) | Whether to create a public IP, or bring your own | `bool` | `true` | no |
 | <a name="input_custom_route"></a> [custom\_route](#input\_custom\_route) | The custom route block, if used | <pre>list(object({<br>    address_prefixes = optional(list(string))<br>  }))</pre> | `[]` | no |
 | <a name="input_default_local_network_gateway_id"></a> [default\_local\_network\_gateway\_id](#input\_default\_local\_network\_gateway\_id) | The ID of the default local network gateway | `string` | `null` | no |
@@ -156,7 +140,7 @@ No modules.
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of the tags to use on the resources that are deployed with this module. | `map(string)` | n/a | yes |
 | <a name="input_type"></a> [type](#input\_type) | The type of VPN gateway to create, either Vpn or ExpressRoute | `string` | n/a | yes |
 | <a name="input_virtual_wan_traffic_enabled"></a> [virtual\_wan\_traffic\_enabled](#input\_virtual\_wan\_traffic\_enabled) | Whether virtual wan traffic is enabled on the VNet gateway | `bool` | `false` | no |
-| <a name="input_vpn_client_configuration"></a> [vpn\_client\_configuration](#input\_vpn\_client\_configuration) | The VPN client configuration block, if used | <pre>list(object({<br>    address_space  = string<br>    aad_tenant_url = optional(string)<br>    aad_audience   = optional(string)<br>    aad_issuer     = optional(string)<br><br>    ip_sec_policy = optional(object({<br>      sa_data_size_kilobytes = number<br>      sa_life_time_seconds   = number<br>      ipsec_encryption       = string<br>      ipsec_integrity        = string<br>      ike_encryption         = string<br>      ike_integrity          = string<br>      dh_group               = string<br>      pfs_group              = string<br>    }))<br>    radius_server = optional(list(object({<br>      address = string<br>      secret  = string<br>      score   = number<br>    })))<br>    radius_server_address = optional(string)<br>    radius_server_secret  = optional(string)<br>    vpn_client_protocols  = optional(list(string))<br>    vpn_auth_type         = optional(list(string))<br>    virtual_network_gateway_client_connection = optional(list(object({<br>    })))<br>  }))</pre> | `[]` | no |
+| <a name="input_vpn_client_configuration"></a> [vpn\_client\_configuration](#input\_vpn\_client\_configuration) | The VPN client configuration block, if used | <pre>list(object({<br>    address_space  = string<br>    aad_tenant_url = optional(string)<br>    aad_audience   = optional(string)<br>    aad_issuer     = optional(string)<br><br>    ipsec_policy = optional(object({<br>      sa_data_size_kilobytes = number<br>      sa_life_time_seconds   = number<br>      ipsec_encryption       = string<br>      ipsec_integrity        = string<br>      ike_encryption         = string<br>      ike_integrity          = string<br>      dh_group               = string<br>      pfs_group              = string<br>    }))<br>    radius_server = optional(list(object({<br>      address = string<br>      secret  = string<br>      score   = number<br>    })))<br>    radius_server_address = optional(string)<br>    radius_server_secret  = optional(string)<br>    root_certificate = optional(list(object({<br>      name             = string<br>      public_cert_data = string<br>    })))<br>    revoked_certificate = optional(list(object({<br>      name       = string<br>      thumbprint = string<br>    })))<br>    vpn_client_protocols = optional(list(string))<br>    vpn_auth_type        = optional(list(string))<br>    virtual_network_gateway_client_connection = optional(list(object({<br>      name              = string<br>      policy_group_name = list(string)<br>      address_prefixes  = list(string)<br>    })))<br>  }))</pre> | `[]` | no |
 | <a name="input_vpn_type"></a> [vpn\_type](#input\_vpn\_type) | The VPN type, can either be RouteBased or PolicyBased | `string` | n/a | yes |
 
 ## Outputs

@@ -12,9 +12,12 @@ variable "bgp_route_translation_for_nat_enabled" {
 
 variable "bgp_settings" {
   type = list(object({
-    asn             = optional(number)
-    peering_address = optional(list(string))
-    peer_weight     = optional(number, 1)
+    asn = optional(number)
+    peering_address = optional(list(object({
+      ip_configuration_name = optional(string)
+      apipa_addresses       = optional(list(string))
+    })))
+    peer_weight = optional(number, 1)
   }))
   description = "The BGP settings block, if used"
   default     = []
@@ -168,7 +171,7 @@ variable "vpn_client_configuration" {
     aad_audience   = optional(string)
     aad_issuer     = optional(string)
 
-    ip_sec_policy = optional(object({
+    ipsec_policy = optional(object({
       sa_data_size_kilobytes = number
       sa_life_time_seconds   = number
       ipsec_encryption       = string
@@ -185,9 +188,20 @@ variable "vpn_client_configuration" {
     })))
     radius_server_address = optional(string)
     radius_server_secret  = optional(string)
-    vpn_client_protocols  = optional(list(string))
-    vpn_auth_type         = optional(list(string))
+    root_certificate = optional(list(object({
+      name             = string
+      public_cert_data = string
+    })))
+    revoked_certificate = optional(list(object({
+      name       = string
+      thumbprint = string
+    })))
+    vpn_client_protocols = optional(list(string))
+    vpn_auth_type        = optional(list(string))
     virtual_network_gateway_client_connection = optional(list(object({
+      name              = string
+      policy_group_name = list(string)
+      address_prefixes  = list(string)
     })))
   }))
   description = "The VPN client configuration block, if used"

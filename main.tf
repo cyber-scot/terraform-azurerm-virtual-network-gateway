@@ -44,9 +44,16 @@ resource "azurerm_virtual_network_gateway" "vnet_gw" {
   dynamic "bgp_settings" {
     for_each = var.bgp_settings != null ? var.bgp_settings : null
     content {
-      asn             = bgp_settings.value.asn
-      peering_address = bgp_settings.value.bgp_peering_address
-      peer_weight     = bgp_settings.value.peer_weight
+      asn         = bgp_settings.value.asn
+      peer_weight = bgp_settings.value.peer_weight
+
+      dynamic "peering_addresses" {
+        for_each = bgp_settings.value.peering_addresses != null ? bgp_settings.value.peering_addresses : null
+        content {
+          ip_configuration_name = peering_addresses.value.ip_configuration_name
+          apipa_addresses       = peering_addresses.value.apipa_addresses != null ? peering_addresses.value.apipa_addresses : null
+        }
+      }
     }
   }
 
@@ -64,43 +71,20 @@ resource "azurerm_virtual_network_gateway" "vnet_gw" {
       aad_tenant    = vpn_client_configuration.value.aad_tenant_url
       aad_audience  = vpn_client_configuration.value.aad_audience
       aad_issuer    = vpn_client_configuration.value.aad_issuer
-    }
-  }
 
-  vpn_client_configuration {
-    address_space = ["10.2.0.0/24"]
-
-    root_certificate {
-      name = "DigiCert-Federated-ID-Root-CA"
-
-      public_cert_data = <<EOF
-MIIDuzCCAqOgAwIBAgIQCHTZWCM+IlfFIRXIvyKSrjANBgkqhkiG9w0BAQsFADBn
-MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3
-d3cuZGlnaWNlcnQuY29tMSYwJAYDVQQDEx1EaWdpQ2VydCBGZWRlcmF0ZWQgSUQg
-Um9vdCBDQTAeFw0xMzAxMTUxMjAwMDBaFw0zMzAxMTUxMjAwMDBaMGcxCzAJBgNV
-BAYTAlVTMRUwEwYDVQQKEwxEaWdpQ2VydCBJbmMxGTAXBgNVBAsTEHd3dy5kaWdp
-Y2VydC5jb20xJjAkBgNVBAMTHURpZ2lDZXJ0IEZlZGVyYXRlZCBJRCBSb290IENB
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvAEB4pcCqnNNOWE6Ur5j
-QPUH+1y1F9KdHTRSza6k5iDlXq1kGS1qAkuKtw9JsiNRrjltmFnzMZRBbX8Tlfl8
-zAhBmb6dDduDGED01kBsTkgywYPxXVTKec0WxYEEF0oMn4wSYNl0lt2eJAKHXjNf
-GTwiibdP8CUR2ghSM2sUTI8Nt1Omfc4SMHhGhYD64uJMbX98THQ/4LMGuYegou+d
-GTiahfHtjn7AboSEknwAMJHCh5RlYZZ6B1O4QbKJ+34Q0eKgnI3X6Vc9u0zf6DH8
-Dk+4zQDYRRTqTnVO3VT8jzqDlCRuNtq6YvryOWN74/dq8LQhUnXHvFyrsdMaE1X2
-DwIDAQABo2MwYTAPBgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIBhjAdBgNV
-HQ4EFgQUGRdkFnbGt1EWjKwbUne+5OaZvRYwHwYDVR0jBBgwFoAUGRdkFnbGt1EW
-jKwbUne+5OaZvRYwDQYJKoZIhvcNAQELBQADggEBAHcqsHkrjpESqfuVTRiptJfP
-9JbdtWqRTmOf6uJi2c8YVqI6XlKXsD8C1dUUaaHKLUJzvKiazibVuBwMIT84AyqR
-QELn3e0BtgEymEygMU569b01ZPxoFSnNXc7qDZBDef8WfqAV/sxkTi8L9BkmFYfL
-uGLOhRJOFprPdoDIUBB+tmCl3oDcBy3vnUeOEioz8zAkprcb3GHwHAK+vHmmfgcn
-WsfMLH4JCLa/tRYL+Rw/N3ybCkDp00s0WUZ+AoDywSl0Q/ZEnNY0MsFiw6LyIdbq
-M/s/1JRtO3bDSzD9TazRVzn2oBqzSa8VgIo5C1nOnoAKJTlsClJKvIhnRlaLQqk=
-EOF
-
-    }
-
-    revoked_certificate {
-      name       = "Verizon-Global-Root-CA"
-      thumbprint = "912198EEF23DCAC40939312FEE97DD560BAE49B1"
+      dynamic "ipsec_policy" {
+        for_each = vpn_client_configuration.value.ipsec_policy
+        content {
+          sa_life_time_seconds   = ipsec_policy.value.sa_life_time_seconds
+          sa_data_size_kilobytes = ipsec_policy.value.sa_data_size_kilobytes
+          ipsec_encryption       = ipsec_policy.value.ipsec_encryption
+          ipsec_integrity        = ipsec_policy.value.ipsec_integrity
+          ike_encryption         = ipsec_policy.value.ike_encryption
+          ike_integrity          = ipsec_policy.value.ike_integrity
+          dh_group               = ipsec_policy.value.dh_group
+          pfs_group              = ipsec_policy.value.pfs_group
+        }
+      }
     }
   }
 }
