@@ -31,6 +31,24 @@ resource "azurerm_virtual_network_gateway" "vnet_gw" {
   remote_vnet_traffic_enabled           = var.remote_vnet_traffic_enabled != null ? var.remote_vnet_traffic_enabled : false
   virtual_wan_traffic_enabled           = var.virtual_wan_traffic_enabled != null ? var.virtual_wan_traffic_enabled : false
 
+  dynamic "policy_group" {
+    for_each = var.policy_group != null ? var.policy_group : null
+    content {
+      name       = policy_group.value.name
+      is_default = policy_group.value.is_default
+      priority   = policy_group.value.priority
+
+      dynamic "policy_member" {
+        for_each = policy_group.value.policy_member != null ? policy_group.value.policy_member : null
+        content {
+          name  = policy_member.value.name
+          type  = policy_member.value.type
+          value = policy_member.value.value
+        }
+      }
+    }
+  }
+
   dynamic "ip_configuration" {
     for_each = var.ip_configuration != null ? var.ip_configuration : null
     content {
@@ -67,10 +85,48 @@ resource "azurerm_virtual_network_gateway" "vnet_gw" {
   dynamic "vpn_client_configuration" {
     for_each = var.vpn_client_configuration
     content {
-      address_space = vpn_client_configuration.value.address_space
-      aad_tenant    = vpn_client_configuration.value.aad_tenant_url
-      aad_audience  = vpn_client_configuration.value.aad_audience
-      aad_issuer    = vpn_client_configuration.value.aad_issuer
+      address_space         = vpn_client_configuration.value.address_space
+      aad_tenant            = vpn_client_configuration.value.aad_tenant_url
+      aad_audience          = vpn_client_configuration.value.aad_audience
+      aad_issuer            = vpn_client_configuration.value.aad_issuer
+      radius_server_address = vpn_client_configuration.value.radius_server_address
+      radius_server_secret  = vpn_client_configuration.value.radius_server_secret
+      vpn_client_protocols  = vpn_client_configuration.value.vpn_client_protocols
+      vpn_auth_types        = vpn_client_configuration.value.vpn_auth_types
+
+      dynamic "virtual_network_gateway_client_connection" {
+        for_each = vpn_client_configuration.value.virtual_network_gateway_client_connection
+        content {
+          name              = virtual_network_gateway_client_connection.value.name
+          policy_group_name = virtual_network_gateway_client_connection.value.policy_group_name
+          address_prefixes  = virtual_network_gateway_client_connection.value.address_prefixes
+        }
+      }
+
+      dynamic "radius_server" {
+        for_each = vpn_client_configuration.value.radius_server
+        content {
+          name    = radius_server.value.name
+          address = radius_server.value.address
+          secret  = radius_server.value.secret
+        }
+      }
+
+      dynamic "root_certificate" {
+        for_each = vpn_client_configuration.value.root_certificate
+        content {
+          name             = root_certificate.value.name
+          public_cert_data = root_certificate.value.data
+        }
+      }
+
+      dynamic "revoked_certificate" {
+        for_each = vpn_client_configuration.value.revoked_certificate
+        content {
+          name       = revoked_certificate.value.name
+          thumbprint = revoked_certificate.value.thumbprint
+        }
+      }
 
       dynamic "ipsec_policy" {
         for_each = vpn_client_configuration.value.ipsec_policy
