@@ -1,4 +1,4 @@
-cparam(
+param(
     [string]$VariablesInFile = "./variables.tf",
     [string]$VariablesOutFile = "./variables.tf",
     [string]$OutputsInFile = "./outputs.tf",
