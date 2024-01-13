@@ -20,32 +20,33 @@ module "network" {
   vnet_address_space = ["10.0.0.0/16"]
 
   subnets = {
-    "sn1-${module.network.vnet_name}" = {
-      address_prefixes = ["10.0.0.0/24"]
+    "GatewaySubnet" = {
+      address_prefixes = ["10.0.0.0/27"]
     }
   }
 }
 
-module "azure_vpn" {
+module "vpn" {
   source = "../../"
 
   rg_name  = module.rg.rg_name
   location = module.rg.rg_location
   tags     = module.rg.rg_tags
 
-  name             = "vpn-${var.short}-${var.loc}-${var.env}-01"
-  create_public_ip = true
-  type             = "Vpn"
-  vpn_type         = "RouteBased"
-  sku              = "VpnGw1"
-  active_active    = false
-  enable_bgp       = false
-  generation       = "Generation1"
+  name                   = "vpn-${var.short}-${var.loc}-${var.env}-01"
+  create_public_ip       = true
+  type                   = "Vpn"
+  vpn_type               = "RouteBased"
+  sku                    = "VpnGw1"
+  active_active          = false
+  enable_bgp             = false
+  generation             = "Generation1"
+  dns_forwarding_enabled = false # Only supports for ExpressRoute
 
   ip_configuration = [
     {
       private_ip_address_allocation = "Dynamic"
-      subnet_id                     = module.network.subnets_ids["sn1-${module.network.vnet_name}"]
+      subnet_id                     = module.network.subnets_ids["GatewaySubnet"]
     }
   ]
 }

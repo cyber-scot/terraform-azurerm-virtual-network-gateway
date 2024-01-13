@@ -172,14 +172,14 @@ variable "vpn_client_configuration" {
     aad_issuer     = optional(string)
 
     ipsec_policy = optional(object({
-      sa_data_size_kilobytes = number
-      sa_life_time_seconds   = number
-      ipsec_encryption       = string
-      ipsec_integrity        = string
-      ike_encryption         = string
-      ike_integrity          = string
-      dh_group               = string
-      pfs_group              = string
+      sa_data_size_in_kilobytes = number
+      sa_lifetime_in_seconds    = number
+      ipsec_encryption          = string
+      ipsec_integrity           = string
+      ike_encryption            = string
+      ike_integrity             = string
+      dh_group                  = string
+      pfs_group                 = string
     }))
     radius_server = optional(list(object({
       address = string

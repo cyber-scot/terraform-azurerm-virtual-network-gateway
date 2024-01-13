@@ -7,7 +7,6 @@ resource "azurerm_public_ip" "pip" {
   allocation_method   = var.public_ip_allocation_method != null ? var.public_ip_allocation_method : "Static"
   sku                 = var.public_ip_sku != null ? var.public_ip_sku : "Standard"
   tags                = var.tags
-
 }
 
 resource "azurerm_virtual_network_gateway" "vnet_gw" {
@@ -97,16 +96,16 @@ resource "azurerm_virtual_network_gateway" "vnet_gw" {
       dynamic "virtual_network_gateway_client_connection" {
         for_each = vpn_client_configuration.value.virtual_network_gateway_client_connection
         content {
-          name              = virtual_network_gateway_client_connection.value.name
-          policy_group_name = virtual_network_gateway_client_connection.value.policy_group_name
-          address_prefixes  = virtual_network_gateway_client_connection.value.address_prefixes
+          name               = virtual_network_gateway_client_connection.value.name
+          policy_group_names = virtual_network_gateway_client_connection.value.policy_group_name
+          address_prefixes   = virtual_network_gateway_client_connection.value.address_prefixes
         }
       }
 
       dynamic "radius_server" {
         for_each = vpn_client_configuration.value.radius_server
         content {
-          name    = radius_server.value.name
+          score   = radius_server.value.score
           address = radius_server.value.address
           secret  = radius_server.value.secret
         }
@@ -131,14 +130,14 @@ resource "azurerm_virtual_network_gateway" "vnet_gw" {
       dynamic "ipsec_policy" {
         for_each = vpn_client_configuration.value.ipsec_policy
         content {
-          sa_life_time_seconds   = ipsec_policy.value.sa_life_time_seconds
-          sa_data_size_kilobytes = ipsec_policy.value.sa_data_size_kilobytes
-          ipsec_encryption       = ipsec_policy.value.ipsec_encryption
-          ipsec_integrity        = ipsec_policy.value.ipsec_integrity
-          ike_encryption         = ipsec_policy.value.ike_encryption
-          ike_integrity          = ipsec_policy.value.ike_integrity
-          dh_group               = ipsec_policy.value.dh_group
-          pfs_group              = ipsec_policy.value.pfs_group
+          sa_lifetime_in_seconds    = ipsec_policy.value.sa_lifetime_in_seconds
+          sa_data_size_in_kilobytes = ipsec_policy.value.sa_data_size_in_kilobytes
+          ipsec_encryption          = ipsec_policy.value.ipsec_encryption
+          ipsec_integrity           = ipsec_policy.value.ipsec_integrity
+          ike_encryption            = ipsec_policy.value.ike_encryption
+          ike_integrity             = ipsec_policy.value.ike_integrity
+          dh_group                  = ipsec_policy.value.dh_group
+          pfs_group                 = ipsec_policy.value.pfs_group
         }
       }
     }

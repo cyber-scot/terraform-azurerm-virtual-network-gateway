@@ -8,7 +8,6 @@ resource "azurerm_public_ip" "pip" {
   allocation_method   = var.public_ip_allocation_method != null ? var.public_ip_allocation_method : "Static"
   sku                 = var.public_ip_sku != null ? var.public_ip_sku : "Standard"
   tags                = var.tags
-
 }
 
 resource "azurerm_virtual_network_gateway" "vnet_gw" {
@@ -98,16 +97,16 @@ resource "azurerm_virtual_network_gateway" "vnet_gw" {
       dynamic "virtual_network_gateway_client_connection" {
         for_each = vpn_client_configuration.value.virtual_network_gateway_client_connection
         content {
-          name              = virtual_network_gateway_client_connection.value.name
-          policy_group_name = virtual_network_gateway_client_connection.value.policy_group_name
-          address_prefixes  = virtual_network_gateway_client_connection.value.address_prefixes
+          name               = virtual_network_gateway_client_connection.value.name
+          policy_group_names = virtual_network_gateway_client_connection.value.policy_group_name
+          address_prefixes   = virtual_network_gateway_client_connection.value.address_prefixes
         }
       }
 
       dynamic "radius_server" {
         for_each = vpn_client_configuration.value.radius_server
         content {
-          name    = radius_server.value.name
+          score   = radius_server.value.score
           address = radius_server.value.address
           secret  = radius_server.value.secret
         }
@@ -132,14 +131,14 @@ resource "azurerm_virtual_network_gateway" "vnet_gw" {
       dynamic "ipsec_policy" {
         for_each = vpn_client_configuration.value.ipsec_policy
         content {
-          sa_life_time_seconds   = ipsec_policy.value.sa_life_time_seconds
-          sa_data_size_kilobytes = ipsec_policy.value.sa_data_size_kilobytes
-          ipsec_encryption       = ipsec_policy.value.ipsec_encryption
-          ipsec_integrity        = ipsec_policy.value.ipsec_integrity
-          ike_encryption         = ipsec_policy.value.ike_encryption
-          ike_integrity          = ipsec_policy.value.ike_integrity
-          dh_group               = ipsec_policy.value.dh_group
-          pfs_group              = ipsec_policy.value.pfs_group
+          sa_lifetime_in_seconds    = ipsec_policy.value.sa_lifetime_in_seconds
+          sa_data_size_in_kilobytes = ipsec_policy.value.sa_data_size_in_kilobytes
+          ipsec_encryption          = ipsec_policy.value.ipsec_encryption
+          ipsec_integrity           = ipsec_policy.value.ipsec_integrity
+          ike_encryption            = ipsec_policy.value.ike_encryption
+          ike_integrity             = ipsec_policy.value.ike_integrity
+          dh_group                  = ipsec_policy.value.dh_group
+          pfs_group                 = ipsec_policy.value.pfs_group
         }
       }
     }
@@ -196,7 +195,7 @@ No modules.
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of the tags to use on the resources that are deployed with this module. | `map(string)` | n/a | yes |
 | <a name="input_type"></a> [type](#input\_type) | The type of VPN gateway to create, either Vpn or ExpressRoute | `string` | n/a | yes |
 | <a name="input_virtual_wan_traffic_enabled"></a> [virtual\_wan\_traffic\_enabled](#input\_virtual\_wan\_traffic\_enabled) | Whether virtual wan traffic is enabled on the VNet gateway | `bool` | `false` | no |
-| <a name="input_vpn_client_configuration"></a> [vpn\_client\_configuration](#input\_vpn\_client\_configuration) | The VPN client configuration block, if used | <pre>list(object({<br>    address_space  = string<br>    aad_tenant_url = optional(string)<br>    aad_audience   = optional(string)<br>    aad_issuer     = optional(string)<br><br>    ipsec_policy = optional(object({<br>      sa_data_size_kilobytes = number<br>      sa_life_time_seconds   = number<br>      ipsec_encryption       = string<br>      ipsec_integrity        = string<br>      ike_encryption         = string<br>      ike_integrity          = string<br>      dh_group               = string<br>      pfs_group              = string<br>    }))<br>    radius_server = optional(list(object({<br>      address = string<br>      secret  = string<br>      score   = number<br>    })))<br>    radius_server_address = optional(string)<br>    radius_server_secret  = optional(string)<br>    root_certificate = optional(list(object({<br>      name             = string<br>      public_cert_data = string<br>    })))<br>    revoked_certificate = optional(list(object({<br>      name       = string<br>      thumbprint = string<br>    })))<br>    vpn_client_protocols = optional(list(string))<br>    vpn_auth_type        = optional(list(string))<br>    virtual_network_gateway_client_connection = optional(list(object({<br>      name              = string<br>      policy_group_name = list(string)<br>      address_prefixes  = list(string)<br>    })))<br>  }))</pre> | `[]` | no |
+| <a name="input_vpn_client_configuration"></a> [vpn\_client\_configuration](#input\_vpn\_client\_configuration) | The VPN client configuration block, if used | <pre>list(object({<br>    address_space  = string<br>    aad_tenant_url = optional(string)<br>    aad_audience   = optional(string)<br>    aad_issuer     = optional(string)<br><br>    ipsec_policy = optional(object({<br>      sa_data_size_in_kilobytes = number<br>      sa_lifetime_in_seconds    = number<br>      ipsec_encryption          = string<br>      ipsec_integrity           = string<br>      ike_encryption            = string<br>      ike_integrity             = string<br>      dh_group                  = string<br>      pfs_group                 = string<br>    }))<br>    radius_server = optional(list(object({<br>      address = string<br>      secret  = string<br>      score   = number<br>    })))<br>    radius_server_address = optional(string)<br>    radius_server_secret  = optional(string)<br>    root_certificate = optional(list(object({<br>      name             = string<br>      public_cert_data = string<br>    })))<br>    revoked_certificate = optional(list(object({<br>      name       = string<br>      thumbprint = string<br>    })))<br>    vpn_client_protocols = optional(list(string))<br>    vpn_auth_type        = optional(list(string))<br>    virtual_network_gateway_client_connection = optional(list(object({<br>      name              = string<br>      policy_group_name = list(string)<br>      address_prefixes  = list(string)<br>    })))<br>  }))</pre> | `[]` | no |
 | <a name="input_vpn_type"></a> [vpn\_type](#input\_vpn\_type) | The VPN type, can either be RouteBased or PolicyBased | `string` | n/a | yes |
 
 ## Outputs
