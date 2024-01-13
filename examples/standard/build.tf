@@ -27,7 +27,7 @@ module "network" {
 }
 
 module "vpn" {
-  source = "../../"
+  source = "cyber-scot/virtual-network-gateway/azurerm"
 
   rg_name  = module.rg.rg_name
   location = module.rg.rg_location
