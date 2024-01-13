@@ -20,7 +20,7 @@ resource "azurerm_virtual_network_gateway" "vnet_gw" {
   sku                                   = var.sku
   active_active                         = var.sku == "HighPerformance" || var.sku == "UltraPerformance" ? var.active_active : false
   enable_bgp                            = var.enable_bgp
-  default_local_network_gateway_id      = var.default_local_network_gateway_id != null ? var.default_local_network_gateway_id : null
+  default_local_network_gateway_id      = var.create_local_network_gateway == true ? azurerm_local_network_gateway.local_gw[0].id : var.default_local_network_gateway_id
   edge_zone                             = var.edge_zone != null ? var.edge_zone : null
   generation                            = var.generation
   private_ip_address_enabled            = var.private_ip_address_enabled != null ? var.private_ip_address_enabled : false
@@ -140,6 +140,26 @@ resource "azurerm_virtual_network_gateway" "vnet_gw" {
           pfs_group                 = ipsec_policy.value.pfs_group
         }
       }
+    }
+  }
+}
+
+
+resource "azurerm_local_network_gateway" "local_gw" {
+  count               = var.create_local_network_gateway == true ? 1 : 0
+  name                = var.local_network_gateway_name != null ? var.local_network_gateway_name : "local-gw-${var.name}"
+  resource_group_name = var.rg_name
+  location            = var.location
+  gateway_address     = var.local_network_gateway_fqdn == null ? var.gateway_address : null
+  gateway_fqdn        = var.local_network_gateway_address == null ? var.gateway_fqdn : null
+  address_space       = var.local_network_gateway_address_space
+
+  dynamic "bgp_settings" {
+    for_each = var.local_network_gateway_bgp_settings
+    content {
+      asn                 = bgp_settings.value.asn
+      bgp_peering_address = bgp_settings.value.bgp_peering_address
+      peer_weight         = bgp_settings.value.peer_weight
     }
   }
 }

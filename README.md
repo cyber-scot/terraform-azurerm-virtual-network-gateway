@@ -21,7 +21,7 @@ resource "azurerm_virtual_network_gateway" "vnet_gw" {
   sku                                   = var.sku
   active_active                         = var.sku == "HighPerformance" || var.sku == "UltraPerformance" ? var.active_active : false
   enable_bgp                            = var.enable_bgp
-  default_local_network_gateway_id      = var.default_local_network_gateway_id != null ? var.default_local_network_gateway_id : null
+  default_local_network_gateway_id      = var.create_local_network_gateway == true ? azurerm_local_network_gateway.local_gw[0].id : var.default_local_network_gateway_id
   edge_zone                             = var.edge_zone != null ? var.edge_zone : null
   generation                            = var.generation
   private_ip_address_enabled            = var.private_ip_address_enabled != null ? var.private_ip_address_enabled : false
@@ -144,6 +144,26 @@ resource "azurerm_virtual_network_gateway" "vnet_gw" {
     }
   }
 }
+
+
+resource "azurerm_local_network_gateway" "local_gw" {
+  count               = var.create_local_network_gateway == true ? 1 : 0
+  name                = var.local_network_gateway_name != null ? var.local_network_gateway_name : "local-gw-${var.name}"
+  resource_group_name = var.rg_name
+  location            = var.location
+  gateway_address     = var.local_network_gateway_fqdn == null ? var.gateway_address : null
+  gateway_fqdn        = var.local_network_gateway_address == null ? var.gateway_fqdn : null
+  address_space       = var.local_network_gateway_address_space
+
+  dynamic "bgp_settings" {
+    for_each = var.local_network_gateway_bgp_settings
+    content {
+      asn                 = bgp_settings.value.asn
+      bgp_peering_address = bgp_settings.value.bgp_peering_address
+      peer_weight         = bgp_settings.value.peer_weight
+    }
+  }
+}
 ```
 ## Requirements
 
@@ -163,6 +183,7 @@ No modules.
 
 | Name | Type |
 |------|------|
+| [azurerm_local_network_gateway.local_gw](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/local_network_gateway) | resource |
 | [azurerm_public_ip.pip](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/public_ip) | resource |
 | [azurerm_virtual_network_gateway.vnet_gw](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/virtual_network_gateway) | resource |
 
@@ -173,6 +194,7 @@ No modules.
 | <a name="input_active_active"></a> [active\_active](#input\_active\_active) | Whether to create an active-active gateway or not | `bool` | `false` | no |
 | <a name="input_bgp_route_translation_for_nat_enabled"></a> [bgp\_route\_translation\_for\_nat\_enabled](#input\_bgp\_route\_translation\_for\_nat\_enabled) | Whether BGP route transaltion for NAT is enabled on the VNet gateway | `bool` | `false` | no |
 | <a name="input_bgp_settings"></a> [bgp\_settings](#input\_bgp\_settings) | The BGP settings block, if used | <pre>list(object({<br>    asn = optional(number)<br>    peering_address = optional(list(object({<br>      ip_configuration_name = optional(string)<br>      apipa_addresses       = optional(list(string))<br>    })))<br>    peer_weight = optional(number, 1)<br>  }))</pre> | `[]` | no |
+| <a name="input_create_local_network_gateway"></a> [create\_local\_network\_gateway](#input\_create\_local\_network\_gateway) | Whether to create a local network gateway or not | `bool` | `false` | no |
 | <a name="input_create_public_ip"></a> [create\_public\_ip](#input\_create\_public\_ip) | Whether to create a public IP, or bring your own | `bool` | `true` | no |
 | <a name="input_custom_route"></a> [custom\_route](#input\_custom\_route) | The custom route block, if used | <pre>list(object({<br>    address_prefixes = optional(list(string))<br>  }))</pre> | `[]` | no |
 | <a name="input_default_local_network_gateway_id"></a> [default\_local\_network\_gateway\_id](#input\_default\_local\_network\_gateway\_id) | The ID of the default local network gateway | `string` | `null` | no |
@@ -182,6 +204,11 @@ No modules.
 | <a name="input_generation"></a> [generation](#input\_generation) | The generation of the VNet gateway, can either be Generation1 or Generation2 or None | `string` | `"Generation2"` | no |
 | <a name="input_ip_configuration"></a> [ip\_configuration](#input\_ip\_configuration) | The IP configuration block of the VNet gateway | <pre>list(object({<br>    name                          = optional(string),<br>    public_ip_address_id          = optional(string)<br>    private_ip_address_allocation = optional(string, "Dynamic")<br>    subnet_id                     = optional(string)<br>  }))</pre> | n/a | yes |
 | <a name="input_ip_sec_replay_protection_enabled"></a> [ip\_sec\_replay\_protection\_enabled](#input\_ip\_sec\_replay\_protection\_enabled) | Whether IP Sec replay protection is enabled on the VNet gateway | `bool` | `true` | no |
+| <a name="input_local_network_gateway_address"></a> [local\_network\_gateway\_address](#input\_local\_network\_gateway\_address) | The address of the local network gateway | `string` | `null` | no |
+| <a name="input_local_network_gateway_address_space"></a> [local\_network\_gateway\_address\_space](#input\_local\_network\_gateway\_address\_space) | The address space of the local network gateway | `list(string)` | `[]` | no |
+| <a name="input_local_network_gateway_bgp_settings"></a> [local\_network\_gateway\_bgp\_settings](#input\_local\_network\_gateway\_bgp\_settings) | The BGP settings block, if used | <pre>list(object({<br>    asn                 = optional(number)<br>    bgp_peering_address = optional(string)<br>    peer_weight         = optional(number, 1)<br>  }))</pre> | `[]` | no |
+| <a name="input_local_network_gateway_fqdn"></a> [local\_network\_gateway\_fqdn](#input\_local\_network\_gateway\_fqdn) | The FQDN of the local network gateway | `string` | `null` | no |
+| <a name="input_local_network_gateway_name"></a> [local\_network\_gateway\_name](#input\_local\_network\_gateway\_name) | The name of the local network gateway | `string` | `null` | no |
 | <a name="input_location"></a> [location](#input\_location) | The location for this resource to be put in | `string` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | The name of the VNet gateway | `string` | n/a | yes |
 | <a name="input_policy_group"></a> [policy\_group](#input\_policy\_group) | The policy group block, if used | <pre>list(object({<br>    name = string<br>    policy_member = list(object({<br>      name  = string<br>      type  = string<br>      value = string<br>    }))<br>    is_default = optional(bool, false)<br>    priority   = optional(number, 0)<br>  }))</pre> | `[]` | no |

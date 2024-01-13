@@ -23,6 +23,12 @@ variable "bgp_settings" {
   default     = []
 }
 
+variable "create_local_network_gateway" {
+  type        = bool
+  description = "Whether to create a local network gateway or not"
+  default     = false
+}
+
 variable "create_public_ip" {
   type        = bool
   description = "Whether to create a public IP, or bring your own"
@@ -81,6 +87,40 @@ variable "ip_sec_replay_protection_enabled" {
   type        = bool
   description = "Whether IP Sec replay protection is enabled on the VNet gateway"
   default     = true
+}
+
+variable "local_network_gateway_address" {
+  type        = string
+  description = "The address of the local network gateway"
+  default     = null
+}
+
+variable "local_network_gateway_address_space" {
+  type        = list(string)
+  description = "The address space of the local network gateway"
+  default     = []
+}
+
+variable "local_network_gateway_bgp_settings" {
+  type = list(object({
+    asn                 = optional(number)
+    bgp_peering_address = optional(string)
+    peer_weight         = optional(number, 1)
+  }))
+  description = "The BGP settings block, if used"
+  default     = []
+}
+
+variable "local_network_gateway_fqdn" {
+  type        = string
+  description = "The FQDN of the local network gateway"
+  default     = null
+}
+
+variable "local_network_gateway_name" {
+  type        = string
+  description = "The name of the local network gateway"
+  default     = null
 }
 
 variable "location" {
